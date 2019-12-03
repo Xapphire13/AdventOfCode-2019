@@ -1,0 +1,20 @@
+{
+  "name": "adventofcode-2019",
+  "version": "0.0.0",
+  "description": "Advent of Code 2019 solutions",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "question": "npm run build && ts-node -T ./scripts/runQuestion.ts"
+  },
+  "author": "xapphire13",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^10.17.6",
+    "@types/yargs": "^13.0.3",
+    "chalk": "^3.0.0",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.2",
+    "yargs": "^15.0.2"
+  }
+}
