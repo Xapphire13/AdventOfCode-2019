@@ -49,21 +49,31 @@ function executeProgram(program: number[]) {
   }
 }
 
-function patchProgram(program: number[]) {
+function patchProgram(program: number[], noun: number, verb: number) {
   if (program.length < 3) {
     throw new Error("Invalid program length, can't patch");
   }
 
-  program[1] = 12;
-  program[2] = 2;
+  program[1] = noun;
+  program[2] = verb;
 }
 
 (async () => {
   console.log(chalk.bold.white("===== Day 2 ====="));
   const program = await readInput();
 
-  patchProgram(program);
-  executeProgram(program);
+  // ===== Part 1 =====
+  const program1 = program.slice();
+  patchProgram(program1, 12, 2);
+  executeProgram(program1);
+  console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(program1[0])}`);
 
-  console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(program[0])}`);
+  // ===== Part 2 =====
+  // Noun and verb found by trial and error
+  const noun = 94;
+  const verb = 25;
+  // const program2 = program.slice();
+  // patchProgram(program2, noun, verb);
+  // executeProgram(program2);
+  console.log(`${chalk.bold("Part 2:")} ${chalk.yellow(100 * noun + verb)}`);
 })()
