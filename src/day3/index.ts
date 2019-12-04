@@ -113,26 +113,19 @@ function sumOfSegments(segments: WireSegment[], endIndex: number) {
   const wire2Segments = getWireSegments(wire2);
 
   // ===== Part 1 =====
-  const intersections: Point[] = [];
+  const intersectionDistances: number[] = [];
 
   wire1Segments.forEach(wire1Segment => {
     wire2Segments.forEach(wire2Segment => {
       const intersection = getIntersection(wire1Segment, wire2Segment);
 
       if (intersection && !(intersection.x === 0 && intersection.y === 0)) {
-        intersections.push(intersection);
+        intersectionDistances.push(calculateDistance({ x: 0, y: 0 }, intersection));
       }
     })
   });
 
-  let minDistance = Infinity;
-  intersections.forEach(intersection => {
-    const distance = calculateDistance({ x: 0, y: 0 }, intersection);
-
-    if (distance < minDistance) {
-      minDistance = distance;
-    }
-  });
+  const minDistance = Math.min(...intersectionDistances);
 
   console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(minDistance)}`);
 
