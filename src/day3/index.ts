@@ -96,13 +96,23 @@ function calculateDistance(point1: Point, point2: Point) {
   return Math.abs(point1.x - point2.x) + Math.abs(point1.y - point2.y);
 }
 
+function sumOfSegments(segments: WireSegment[], endIndex: number) {
+  return segments.reduce((agg, [currStart, currEnd], i) => {
+    if (i < endIndex) {
+      return agg + calculateDistance(currStart, currEnd);
+    }
+
+    return agg;
+  }, 0);
+}
+
 (async () => {
   console.log(chalk.bold.white("===== Day 3 ====="));
   const [wire1, wire2] = await readInput();
-
-  // ===== Part 1 =====
   const wire1Segments = getWireSegments(wire1);
   const wire2Segments = getWireSegments(wire2);
+
+  // ===== Part 1 =====
   const intersections: Point[] = [];
 
   wire1Segments.forEach(wire1Segment => {
@@ -125,4 +135,24 @@ function calculateDistance(point1: Point, point2: Point) {
   });
 
   console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(minDistance)}`);
+
+  // ===== Part 2 =====
+  const intersectionStepLengths: number[] = [];
+
+  wire1Segments.forEach((wire1Segment, i1) => {
+    wire2Segments.forEach((wire2Segment, i2) => {
+      const intersection = getIntersection(wire1Segment, wire2Segment);
+
+      if (intersection && !(intersection.x === 0 && intersection.y === 0)) {
+        const length1 = sumOfSegments(wire1Segments, i1) + calculateDistance(intersection, wire1Segment[0]);
+        const length2 = sumOfSegments(wire2Segments, i2) + calculateDistance(intersection, wire2Segment[0]);
+
+        intersectionStepLengths.push(length1 + length2);
+      }
+    })
+  });
+
+  const minStepDistance = Math.min(...intersectionStepLengths);
+
+  console.log(`${chalk.bold("Part 2:")} ${chalk.yellow(minStepDistance)}`);
 })();
