@@ -73,6 +73,54 @@ export default {
           i += 2;
           break;
         }
+        case 5: { // Jump if true
+          const arg1 = program[i + 1];
+          const arg2 = program[i + 2];
+          const val = readValue(arg1, parameterModes[0]);
+          const destination = readValue(arg2, parameterModes[1]);
+
+          if (val !== 0) {
+            i = destination;
+          } else {
+            i += 3;
+          }
+          break;
+        }
+        case 6: { // Jump if false
+          const arg1 = program[i + 1];
+          const arg2 = program[i + 2];
+          const val = readValue(arg1, parameterModes[0]);
+          const destination = readValue(arg2, parameterModes[1]);
+
+          if (val === 0) {
+            i = destination;
+          } else {
+            i += 3;
+          }
+          break;
+        }
+        case 7: { // Less than
+          const arg1 = program[i + 1];
+          const arg2 = program[i + 2];
+          const arg3 = program[i + 3];
+          const left = readValue(arg1, parameterModes[0]);
+          const right = readValue(arg2, parameterModes[1]);
+
+          program[arg3] = left < right ? 1 : 0;
+          i += 4;
+          break;
+        }
+        case 8: { // Equals
+          const arg1 = program[i + 1];
+          const arg2 = program[i + 2];
+          const arg3 = program[i + 3];
+          const left = readValue(arg1, parameterModes[0]);
+          const right = readValue(arg2, parameterModes[1]);
+
+          program[arg3] = left === right ? 1 : 0;
+          i += 4;
+          break;
+        }
         case 99: // Exit
           rl.close();
           return;
