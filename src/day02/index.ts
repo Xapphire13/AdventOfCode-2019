@@ -4,6 +4,7 @@ import path from "path";
 import { promisify } from "util";
 import chalk from "chalk";
 import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import ShipComputer from "../ShipComputer";
 
 const INPUT_PATH = path.resolve(getQuestionSrcDir(2), "input.txt");
 
@@ -14,39 +15,6 @@ async function readInput(): Promise<number[]> {
   const text = (await promisify(fs.readFile)(INPUT_PATH, "utf8")).trim();
 
   return text.split(",").map(i => +i);
-}
-
-function executeProgram(program: number[]) {
-  for (let i = 0; i < program.length; i += 4) {
-    const opcode = program[i];
-
-    if (opcode !== 99 && (i + 3) >= program.length) {
-      throw new Error("Invalid program length");
-    }
-
-    const arg1 = program[i + 1];
-    const arg2 = program[i + 2];
-    const arg3 = program[i + 3];
-
-    switch (opcode) {
-      case 1: { // Addition
-        const val1 = program[arg1];
-        const val2 = program[arg2];
-        program[arg3] = val1 + val2;
-        break;
-      }
-      case 2: { // Multiplication
-        const val1 = program[arg1];
-        const val2 = program[arg2];
-        program[arg3] = val1 * val2;
-        break;
-      }
-      case 99: // Exit
-        return;
-      default:
-        throw new Error(`Unknown opcode: ${opcode}`);
-    }
-  }
 }
 
 function patchProgram(program: number[], noun: number, verb: number) {
@@ -65,7 +33,7 @@ function patchProgram(program: number[], noun: number, verb: number) {
   // ===== Part 1 =====
   const program1 = program.slice();
   patchProgram(program1, 12, 2);
-  executeProgram(program1);
+  ShipComputer.executeProgram(program1);
   console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(program1[0])}`);
 
   // ===== Part 2 =====
