@@ -33,7 +33,7 @@ function patchProgram(program: number[], noun: number, verb: number) {
   // ===== Part 1 =====
   const program1 = program.slice();
   patchProgram(program1, 12, 2);
-  ShipComputer.executeProgram(program1);
+  await ShipComputer.executeProgram(program1);
   console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(program1[0])}`);
 
   // ===== Part 2 =====
@@ -42,6 +42,6 @@ function patchProgram(program: number[], noun: number, verb: number) {
   const verb = 25;
   // const program2 = program.slice();
   // patchProgram(program2, noun, verb);
-  // executeProgram(program2);
+  // await ShipComputer.executeProgram(program2);
   console.log(`${chalk.bold("Part 2:")} ${chalk.yellow(100 * noun + verb)}`);
 })()

@@ -1,34 +1,86 @@
-export default {
-  executeProgram: (program: number[]) => {
-    for (let i = 0; i < program.length; i += 4) {
-      const opcode = program[i];
+import readline from "readline";
 
-      if (opcode !== 99 && (i + 3) >= program.length) {
-        throw new Error("Invalid program length");
+function parseInstruction(instruction: number) {
+  const instructionStr = String(instruction);
+  const opcode = +instructionStr.slice(instructionStr.length - 2);
+  const parameterModes: number[] = [];
+
+  for (let i = instructionStr.length - 3; i >= 0; i--) {
+    parameterModes.push(+instructionStr[i]);
+  }
+
+  return {
+    opcode,
+    parameterModes
+  }
+}
+
+export default {
+  executeProgram: async (program: number[]) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    const readInput = () => {
+      return new Promise<number>((res) => rl.question("Input: ", value => res(+value)));
+    };
+
+    const readValue = (value: number, parameterMode: number | undefined) => {
+      if (!parameterMode) { // Position mode
+        return program[value];
       }
 
-      const arg1 = program[i + 1];
-      const arg2 = program[i + 2];
-      const arg3 = program[i + 3];
+      // Immediate mode
+      return value;
+    }
+
+    for (let i = 0; i < program.length;) {
+      const { opcode, parameterModes } = parseInstruction(program[i]);
 
       switch (opcode) {
         case 1: { // Addition
-          const val1 = program[arg1];
-          const val2 = program[arg2];
+          const arg1 = program[i + 1];
+          const arg2 = program[i + 2];
+          const arg3 = program[i + 3];
+          const val1 = readValue(arg1, parameterModes[0]);
+          const val2 = readValue(arg2, parameterModes[1]);
           program[arg3] = val1 + val2;
+          i += 4;
           break;
         }
         case 2: { // Multiplication
-          const val1 = program[arg1];
-          const val2 = program[arg2];
+          const arg1 = program[i + 1];
+          const arg2 = program[i + 2];
+          const arg3 = program[i + 3];
+          const val1 = readValue(arg1, parameterModes[0]);
+          const val2 = readValue(arg2, parameterModes[1]);
           program[arg3] = val1 * val2;
+          i += 4;
+          break;
+        }
+        case 3: { // Input
+          const arg = program[i + 1];
+          const inputVal = await readInput();
+          program[arg] = inputVal;
+          i += 2;
+          break;
+        }
+        case 4: { // Output
+          const arg = program[i + 1];
+          const val = readValue(arg, parameterModes[0]);
+          console.log(val);
+          i += 2;
           break;
         }
         case 99: // Exit
+          rl.close();
           return;
         default:
           throw new Error(`Unknown opcode: ${opcode}`);
       }
     }
+
+    rl.close();
   }
 }
