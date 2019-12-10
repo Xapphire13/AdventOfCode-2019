@@ -4,6 +4,7 @@ import readline from "readline";
 
 interface ExecutionOptions {
   input?: number[];
+  printOutput?: boolean;
 }
 
 function parseInstruction(instruction: number) {
@@ -22,7 +23,9 @@ function parseInstruction(instruction: number) {
 }
 
 export default {
-  executeProgram: async (program: number[], options: ExecutionOptions = {}) => {
+  executeProgram: async (program: number[], options: ExecutionOptions = {}): Promise<number[]> => {
+    const { printOutput = false } = options;
+    const output: number[] = [];
     const { cleanup, readInput } = (() => {
       let cleanup: () => void = () => { };
       let readInput: () => Promise<number>;
@@ -97,7 +100,10 @@ export default {
         case 4: { // Output
           const arg = program[i + 1];
           const val = readValue(arg, parameterModes[0]);
-          console.log(val);
+          if (printOutput) {
+            console.log(val);
+          }
+          output.push(val);
           i += 2;
           break;
         }
@@ -151,13 +157,14 @@ export default {
         }
         case 99: // Exit
           cleanup();
-          return;
+          return output;
         default:
           throw new Error(`Unknown opcode: ${opcode}`);
       }
     }
 
     cleanup();
+    return output;
   },
   loadProgram:
     /**
