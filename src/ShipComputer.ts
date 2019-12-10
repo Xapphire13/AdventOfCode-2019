@@ -1,3 +1,5 @@
+import { promisify } from "util";
+import fs from "fs";
 import readline from "readline";
 
 interface ExecutionOptions {
@@ -156,5 +158,14 @@ export default {
     }
 
     cleanup();
-  }
+  },
+  loadProgram:
+    /**
+     * Reads the Intcode program from the input fle
+     */
+    async (programPath: string): Promise<number[]> => {
+      const text = (await promisify(fs.readFile)(programPath, "utf8")).trim();
+
+      return text.split(",").map(i => +i);
+    }
 }
