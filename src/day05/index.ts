@@ -24,11 +24,11 @@ async function readInput(): Promise<number[]> {
 
   // ===== Part 1 =====
   const program1 = program.slice();
-  console.log(`${chalk.bold("Part 1 (Enter 1):")}`);
-  await ShipComputer.executeProgram(program1);
+  console.log(`${chalk.bold("Part 1:")}`);
+  await ShipComputer.executeProgram(program1, { input: [1] });
 
   // ===== Part 2 =====
   const program2 = program.slice();
-  console.log(`${chalk.bold("Part 2 (Enter 5):")}`);
-  await ShipComputer.executeProgram(program2);
+  console.log(`${chalk.bold("Part 2:")}`);
+  await ShipComputer.executeProgram(program2, { input: [5] });
 })()

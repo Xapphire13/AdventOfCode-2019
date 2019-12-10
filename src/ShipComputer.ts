@@ -1,5 +1,9 @@
 import readline from "readline";
 
+interface ExecutionOptions {
+  input?: number[];
+}
+
 function parseInstruction(instruction: number) {
   const instructionStr = String(instruction);
   const opcode = +instructionStr.slice(instructionStr.length - 2);
@@ -16,15 +20,37 @@ function parseInstruction(instruction: number) {
 }
 
 export default {
-  executeProgram: async (program: number[]) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+  executeProgram: async (program: number[], options: ExecutionOptions = {}) => {
+    const { cleanup, readInput } = (() => {
+      let cleanup: () => void = () => { };
+      let readInput: () => Promise<number>;
 
-    const readInput = () => {
-      return new Promise<number>((res) => rl.question("Input: ", value => res(+value)));
-    };
+      if (options.input) {
+        const input = options.input;
+
+        readInput = (() => {
+          let i = 0;
+
+          return () => Promise.resolve(input[i++]);
+        })();
+      } else {
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout
+        });
+
+        readInput = () => {
+          return new Promise<number>((res) => rl.question("Input: ", value => res(+value)));
+        };
+
+        cleanup = () => rl.close();
+      }
+
+      return {
+        readInput,
+        cleanup
+      }
+    })();
 
     const readValue = (value: number, parameterMode: number | undefined) => {
       if (!parameterMode) { // Position mode
@@ -122,13 +148,13 @@ export default {
           break;
         }
         case 99: // Exit
-          rl.close();
+          cleanup();
           return;
         default:
           throw new Error(`Unknown opcode: ${opcode}`);
       }
     }
 
-    rl.close();
+    cleanup();
   }
 }
