@@ -2,8 +2,9 @@ import { promisify } from "util";
 import fs from "fs";
 import readline from "readline";
 
-interface ExecutionOptions {
-  input?: number[];
+export interface ExecutionOptions {
+  input?: number[] | (() => Promise<number>);
+  output?: (value: number) => void;
   printOutput?: boolean;
 }
 
@@ -29,15 +30,20 @@ export default {
     const { cleanup, readInput } = (() => {
       let cleanup: () => void = () => { };
       let readInput: () => Promise<number>;
+      let writeOutput: (value: number) => void;
 
       if (options.input) {
         const input = options.input;
 
-        readInput = (() => {
-          let i = 0;
+        if (typeof input === "function") {
+          readInput = input;
+        } else {
+          readInput = (() => {
+            let i = 0;
 
-          return () => Promise.resolve(input[i++]);
-        })();
+            return () => Promise.resolve(input[i++]);
+          })();
+        }
       } else {
         const rl = readline.createInterface({
           input: process.stdin,
@@ -104,6 +110,7 @@ export default {
             console.log(val);
           }
           output.push(val);
+          options.output?.(val);
           i += 2;
           break;
         }
