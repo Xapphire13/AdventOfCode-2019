@@ -6,6 +6,7 @@ export interface ExecutionOptions {
   input?: number[] | (() => Promise<number>);
   output?: (value: number) => void;
   printOutput?: boolean;
+  trace?: boolean;
 }
 
 enum ParameterMode {
@@ -72,11 +73,23 @@ export default {
       }
     })();
 
+    const trace = (...args: any[]) => {
+      if (options.trace) {
+        console.info(...args);
+      }
+    }
+
+    const getBlockIndex = (position: number) => {
+      const virtualMemoryIndex = position - program.length;
+      return virtualMemoryIndex % MEMORY_BLOCK_SIZE;
+    }
+
     const getMemoryBlock = (position: number) => {
-      const blockNumber = Math.floor(position / MEMORY_BLOCK_SIZE);
+      const virtualMemoryIndex = position - program.length;
+      const blockNumber = Math.floor(virtualMemoryIndex / MEMORY_BLOCK_SIZE);
 
       if (extraMemory[blockNumber] == undefined) {
-        extraMemory[blockNumber] = [new Array(MEMORY_BLOCK_SIZE).keys()].map(() => 0);
+        extraMemory[blockNumber] = [...new Array(MEMORY_BLOCK_SIZE).keys()].map(() => 0);
       }
 
       return extraMemory[blockNumber];
@@ -88,7 +101,7 @@ export default {
       }
 
       const block = getMemoryBlock(position);
-      const blockIndex = position % MEMORY_BLOCK_SIZE;
+      const blockIndex = getBlockIndex(position);
 
       return block[blockIndex];
     };
@@ -98,7 +111,7 @@ export default {
         program[position] = value;
       } else {
         const block = getMemoryBlock(position);
-        const blockIndex = position % MEMORY_BLOCK_SIZE;
+        const blockIndex = getBlockIndex(position);
 
         block[blockIndex] = value;
       }
@@ -116,6 +129,16 @@ export default {
       }
     }
 
+    const calculateDestination = (value: number, parameterMode: number | undefined) => {
+      switch (parameterMode) {
+        case ParameterMode.Relative:
+          return relativeBase + value;
+        case ParameterMode.Immediate:
+        default:
+          return value;
+      }
+    }
+
     for (let i = 0; i < program.length;) {
       const { opcode, parameterModes } = parseInstruction(readFromMemory(i));
 
@@ -126,7 +149,9 @@ export default {
           const arg3 = readFromMemory(i + 3);
           const val1 = readValue(arg1, parameterModes[0]);
           const val2 = readValue(arg2, parameterModes[1]);
-          writeToMemory(arg3, val1 + val2);
+          const destination = calculateDestination(arg3, parameterModes[2]);
+          trace(`Adding ${val1} + ${val2} and storing in ${destination}`);
+          writeToMemory(destination, val1 + val2);
           i += 4;
           break;
         }
@@ -136,20 +161,25 @@ export default {
           const arg3 = readFromMemory(i + 3);
           const val1 = readValue(arg1, parameterModes[0]);
           const val2 = readValue(arg2, parameterModes[1]);
-          writeToMemory(arg3, val1 * val2);
+          const destination = calculateDestination(arg3, parameterModes[2]);
+          trace(`Multiplying ${val1} * ${val2} and storing in ${destination}`);
+          writeToMemory(destination, val1 * val2);
           i += 4;
           break;
         }
         case 3: { // Input
           const arg = readFromMemory(i + 1);
+          const destination = calculateDestination(arg, parameterModes[0]);
           const inputVal = await readInput();
-          writeToMemory(arg, inputVal);
+          writeToMemory(destination, inputVal);
+          trace(`Storing input of ${inputVal} in ${destination}`);
           i += 2;
           break;
         }
         case 4: { // Output
           const arg = readFromMemory(i + 1);
           const val = readValue(arg, parameterModes[0]);
+          trace(`Output: ${val}`);
           if (printOutput) {
             console.log(val);
           }
@@ -164,6 +194,7 @@ export default {
           const val = readValue(arg1, parameterModes[0]);
           const destination = readValue(arg2, parameterModes[1]);
 
+          trace(`Jumping to ${destination} if ${val} !== 0`);
           if (val !== 0) {
             i = destination;
           } else {
@@ -177,6 +208,7 @@ export default {
           const val = readValue(arg1, parameterModes[0]);
           const destination = readValue(arg2, parameterModes[1]);
 
+          trace(`Jumping to ${destination} if ${val} === 0`);
           if (val === 0) {
             i = destination;
           } else {
@@ -190,8 +222,10 @@ export default {
           const arg3 = readFromMemory(i + 3);
           const left = readValue(arg1, parameterModes[0]);
           const right = readValue(arg2, parameterModes[1]);
+          const destination = calculateDestination(arg3, parameterModes[2]);
 
-          writeToMemory(arg3, left < right ? 1 : 0);
+          trace(`Comparing ${left} < ${right} and storing in ${destination}`);
+          writeToMemory(destination, left < right ? 1 : 0);
           i += 4;
           break;
         }
@@ -201,17 +235,23 @@ export default {
           const arg3 = readFromMemory(i + 3);
           const left = readValue(arg1, parameterModes[0]);
           const right = readValue(arg2, parameterModes[1]);
+          const destination = calculateDestination(arg3, parameterModes[2]);
 
-          writeToMemory(arg3, left === right ? 1 : 0);
+          trace(`Comparing ${left} === ${right} and storing in ${destination}`);
+          writeToMemory(destination, left === right ? 1 : 0);
           i += 4;
           break;
         }
         case 9: { // Adjust relative base
           const arg1 = readFromMemory(i + 1);
-          relativeBase += arg1;
+          const val = readValue(arg1, parameterModes[0]);
+          trace(`Adjusting relative base by ${val}. ${relativeBase} => ${relativeBase + val}`);
+          relativeBase += val;
+          i += 2;
           break;
         }
         case 99: // Exit
+          trace("Exiting");
           cleanup();
           return output;
         default:
