@@ -15,5 +15,6 @@ const INPUT_PATH = path.join(getQuestionSrcDir(9), "input.txt");
   console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(output1)}`);
 
   // ===== Part 2 =====
-  console.log(`${chalk.bold("Part 2:")} ${chalk.yellow("TODO")}`);
+  const output2 = await ShipComputer.executeProgram(program.slice(), { input: [2] });
+  console.log(`${chalk.bold("Part 2:")} ${chalk.yellow(output2)}`);
 })();
