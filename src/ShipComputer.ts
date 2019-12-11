@@ -8,6 +8,12 @@ export interface ExecutionOptions {
   printOutput?: boolean;
 }
 
+enum ParameterMode {
+  Position = 0,
+  Immediate = 1,
+  Relative = 2
+}
+
 function parseInstruction(instruction: number) {
   const instructionStr = String(instruction);
   const opcode = +instructionStr.slice(instructionStr.length - 2);
@@ -23,14 +29,17 @@ function parseInstruction(instruction: number) {
   }
 }
 
+const MEMORY_BLOCK_SIZE = 1000;
+
 export default {
   executeProgram: async (program: number[], options: ExecutionOptions = {}): Promise<number[]> => {
+    let relativeBase = 0;
+    const extraMemory: Record<number, number[]> = {};
     const { printOutput = false } = options;
     const output: number[] = [];
     const { cleanup, readInput } = (() => {
       let cleanup: () => void = () => { };
       let readInput: () => Promise<number>;
-      let writeOutput: (value: number) => void;
 
       if (options.input) {
         const input = options.input;
@@ -63,48 +72,83 @@ export default {
       }
     })();
 
-    const readValue = (value: number, parameterMode: number | undefined) => {
-      if (!parameterMode) { // Position mode
-        return program[value];
+    const getMemoryBlock = (position: number) => {
+      const blockNumber = Math.floor(position / MEMORY_BLOCK_SIZE);
+
+      if (extraMemory[blockNumber] == undefined) {
+        extraMemory[blockNumber] = [new Array(MEMORY_BLOCK_SIZE).keys()].map(() => 0);
       }
 
-      // Immediate mode
-      return value;
+      return extraMemory[blockNumber];
+    }
+
+    const readFromMemory = (position: number) => {
+      if (position < program.length) {
+        return program[position];
+      }
+
+      const block = getMemoryBlock(position);
+      const blockIndex = position % MEMORY_BLOCK_SIZE;
+
+      return block[blockIndex];
+    };
+
+    const writeToMemory = (position: number, value: number) => {
+      if (position < program.length) {
+        program[position] = value;
+      } else {
+        const block = getMemoryBlock(position);
+        const blockIndex = position % MEMORY_BLOCK_SIZE;
+
+        block[blockIndex] = value;
+      }
+    };
+
+    const readValue = (value: number, parameterMode: number | undefined) => {
+      switch (parameterMode) {
+        case ParameterMode.Immediate:
+          return value;
+        case ParameterMode.Relative:
+          return readFromMemory(relativeBase + value);
+        case ParameterMode.Position:
+        default:
+          return readFromMemory(value);
+      }
     }
 
     for (let i = 0; i < program.length;) {
-      const { opcode, parameterModes } = parseInstruction(program[i]);
+      const { opcode, parameterModes } = parseInstruction(readFromMemory(i));
 
       switch (opcode) {
         case 1: { // Addition
-          const arg1 = program[i + 1];
-          const arg2 = program[i + 2];
-          const arg3 = program[i + 3];
+          const arg1 = readFromMemory(i + 1);
+          const arg2 = readFromMemory(i + 2);
+          const arg3 = readFromMemory(i + 3);
           const val1 = readValue(arg1, parameterModes[0]);
           const val2 = readValue(arg2, parameterModes[1]);
-          program[arg3] = val1 + val2;
+          writeToMemory(arg3, val1 + val2);
           i += 4;
           break;
         }
         case 2: { // Multiplication
-          const arg1 = program[i + 1];
-          const arg2 = program[i + 2];
-          const arg3 = program[i + 3];
+          const arg1 = readFromMemory(i + 1);
+          const arg2 = readFromMemory(i + 2);
+          const arg3 = readFromMemory(i + 3);
           const val1 = readValue(arg1, parameterModes[0]);
           const val2 = readValue(arg2, parameterModes[1]);
-          program[arg3] = val1 * val2;
+          writeToMemory(arg3, val1 * val2);
           i += 4;
           break;
         }
         case 3: { // Input
-          const arg = program[i + 1];
+          const arg = readFromMemory(i + 1);
           const inputVal = await readInput();
-          program[arg] = inputVal;
+          writeToMemory(arg, inputVal);
           i += 2;
           break;
         }
         case 4: { // Output
-          const arg = program[i + 1];
+          const arg = readFromMemory(i + 1);
           const val = readValue(arg, parameterModes[0]);
           if (printOutput) {
             console.log(val);
@@ -115,8 +159,8 @@ export default {
           break;
         }
         case 5: { // Jump if true
-          const arg1 = program[i + 1];
-          const arg2 = program[i + 2];
+          const arg1 = readFromMemory(i + 1);
+          const arg2 = readFromMemory(i + 2);
           const val = readValue(arg1, parameterModes[0]);
           const destination = readValue(arg2, parameterModes[1]);
 
@@ -128,8 +172,8 @@ export default {
           break;
         }
         case 6: { // Jump if false
-          const arg1 = program[i + 1];
-          const arg2 = program[i + 2];
+          const arg1 = readFromMemory(i + 1);
+          const arg2 = readFromMemory(i + 2);
           const val = readValue(arg1, parameterModes[0]);
           const destination = readValue(arg2, parameterModes[1]);
 
@@ -141,25 +185,30 @@ export default {
           break;
         }
         case 7: { // Less than
-          const arg1 = program[i + 1];
-          const arg2 = program[i + 2];
-          const arg3 = program[i + 3];
+          const arg1 = readFromMemory(i + 1);
+          const arg2 = readFromMemory(i + 2);
+          const arg3 = readFromMemory(i + 3);
           const left = readValue(arg1, parameterModes[0]);
           const right = readValue(arg2, parameterModes[1]);
 
-          program[arg3] = left < right ? 1 : 0;
+          writeToMemory(arg3, left < right ? 1 : 0);
           i += 4;
           break;
         }
         case 8: { // Equals
-          const arg1 = program[i + 1];
-          const arg2 = program[i + 2];
-          const arg3 = program[i + 3];
+          const arg1 = readFromMemory(i + 1);
+          const arg2 = readFromMemory(i + 2);
+          const arg3 = readFromMemory(i + 3);
           const left = readValue(arg1, parameterModes[0]);
           const right = readValue(arg2, parameterModes[1]);
 
-          program[arg3] = left === right ? 1 : 0;
+          writeToMemory(arg3, left === right ? 1 : 0);
           i += 4;
+          break;
+        }
+        case 9: { // Adjust relative base
+          const arg1 = readFromMemory(i + 1);
+          relativeBase += arg1;
           break;
         }
         case 99: // Exit
