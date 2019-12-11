@@ -19,6 +19,12 @@ interface Picture {
   readonly layers: number[][];
 }
 
+enum Color {
+  Black = 0,
+  White = 1,
+  Transparent = 2
+}
+
 function deserializePicture(pixels: number[], width: number, height: number) {
   const layers: number[][] = [];
 
@@ -66,5 +72,34 @@ function deserializePicture(pixels: number[], width: number, height: number) {
   console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(answer1)}`);
 
   // ===== Part 2 =====
-  console.log(`${chalk.bold("Part 2:")} ${chalk.yellow("TODO")}`);
+  function flattenImage(picture: Picture) {
+    const flattened: number[] = [];
+    const pixelsPerLayer = picture.width * picture.height;
+
+    for (let i = 0; i < pixelsPerLayer; i++) {
+      flattened.push(picture.layers.reduce((res, layer) => {
+        if (res === Color.Transparent) {
+          return layer[i];
+        }
+
+        return res;
+      }, Color.Transparent));
+    }
+
+    return flattened;
+  }
+  function layerToString(layer: number[], width: number, height: number) {
+    let lines = [];
+    const pixels = width * height;
+    for (let i = 0; i < pixels; i += width) {
+      lines.push(layer.slice(i, i + width).join(""));
+    }
+
+    return lines.join("\n");
+  }
+  const flatImage = flattenImage(picture);
+  let output = layerToString(flatImage, picture.width, picture.height);
+  output = output.replace(/0/g, chalk.black("█"));
+  output = output.replace(/1/g, chalk.white("█"));
+  console.log(`${chalk.bold("Part 2:")}\n${chalk.yellow(output)}`);
 })();
