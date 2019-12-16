@@ -1,14 +1,9 @@
 // https://adventofcode.com/2019/day/8
-import fs from "fs";
-import path from "path";
-import { promisify } from "util";
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import readInputFile from "../utils/readInputFile";
 import chalk from "chalk";
 
-const INPUT_PATH = path.join(getQuestionSrcDir(8), "input.txt");
-
 async function readInput(): Promise<number[]> {
-  const text = await promisify(fs.readFile)(INPUT_PATH, "utf8");
+  const text = await readInputFile(8);
 
   return [...text.trim()].map(char => +char);
 }

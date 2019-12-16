@@ -1,9 +1,5 @@
 // https://adventofcode.com/2019/day/22
-import path from "path";
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
 import chalk from "chalk";
-
-const INPUT_PATH = path.join(getQuestionSrcDir(22), "input.txt");
 
 (async () => {
   console.log(chalk.bold.white("===== Day 22 ====="));

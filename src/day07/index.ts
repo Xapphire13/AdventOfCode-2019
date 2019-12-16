@@ -1,10 +1,7 @@
 // https://adventofcode.com/2019/day/7
-import path from "path";
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import readInputFile from "../utils/readInputFile";
 import chalk from "chalk";
 import ShipComputer, { ExecutionOptions } from "../ShipComputer";
-
-const INPUT_PATH = path.join(getQuestionSrcDir(7), "input.txt");
 
 class Pipe {
   private index = 0;
@@ -50,7 +47,7 @@ class Pipe {
 
 (async () => {
   console.log(chalk.bold.white("===== Day 1 ====="));
-  const program = await ShipComputer.loadProgram(INPUT_PATH);
+  const program = ShipComputer.loadProgram(await readInputFile(7));
 
   async function findOptimalOutput(program: number[], numberOfAmps: number, possiblePhases: number[], action: (program: number[], phases: number[]) => Promise<number>) {
     let maximum = 0;

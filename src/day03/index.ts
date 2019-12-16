@@ -1,8 +1,5 @@
 // https://adventofcode.com/2019/day/3
-import fs from "fs";
-import path from "path";
-import { promisify } from "util";
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import readInputFile from "../utils/readInputFile";
 import chalk from "chalk";
 
 type Point = {
@@ -12,10 +9,8 @@ type Point = {
 
 type WireSegment = [Point, Point];
 
-const INPUT_PATH = path.resolve(getQuestionSrcDir(3), "input.txt");
-
 async function readInput() {
-  const lines = (await promisify(fs.readFile)(INPUT_PATH, "utf8")).trim().split(/\r?\n/);
+  const lines = (await readInputFile(3)).trim().split(/\r?\n/);
 
   return lines.map(line => line.split(","));
 }

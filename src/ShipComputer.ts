@@ -264,11 +264,9 @@ export default {
   },
   loadProgram:
     /**
-     * Reads the Intcode program from the input fle
+     * Parses the Intcode program from the input fle
      */
-    async (programPath: string): Promise<number[]> => {
-      const text = (await promisify(fs.readFile)(programPath, "utf8")).trim();
-
-      return text.split(",").map(i => +i);
+    (programText: string): number[] => {
+      return programText.trim().split(",").map(i => +i);
     }
 }

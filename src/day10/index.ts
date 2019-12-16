@@ -1,11 +1,9 @@
 // https://adventofcode.com/2019/day/10
-import path from "path";
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import readInputFile from "../utils/readInputFile";
 import chalk from "chalk";
 
-const INPUT_PATH = path.join(getQuestionSrcDir(10), "input.txt");
-
 (async () => {
+  const inputFile = await readInputFile(10);
   console.log(chalk.bold.white("===== Day 10 ====="));
 
   // ===== Part 1 =====

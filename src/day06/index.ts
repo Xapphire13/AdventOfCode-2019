@@ -1,17 +1,12 @@
 // https://adventofcode.com/2019/day/6
-import fs from "fs";
-import path from "path";
-import { promisify } from "util";
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import readInputFile from "../utils/readInputFile";
 import chalk from "chalk";
-
-const INPUT_PATH = path.join(getQuestionSrcDir(6), "input.txt");
 
 /**
  * Reads a list of direct orbit edges
  */
 async function readInput(): Promise<Map<string, string>> {
-  const text = await promisify(fs.readFile)(INPUT_PATH, "utf8");
+  const text = await readInputFile(6);
   const directOrbits = new Map<string, string>();
 
   text.split(/\r?\n/).filter(line => line.trim()).forEach(line => {

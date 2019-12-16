@@ -1,15 +1,12 @@
 // https://adventofcode.com/2019/day/5
-import path from "path";
 import chalk from "chalk";
 
-import getQuestionSrcDir from "../utils/getQuestionSrcDir";
+import readInputFile from "../utils/readInputFile";
 import ShipComputer from "../ShipComputer";
-
-const INPUT_PATH = path.resolve(getQuestionSrcDir(5), "input.txt");
 
 (async () => {
   console.log(chalk.bold.white("===== Day 5 ====="));
-  const program = await ShipComputer.loadProgram(INPUT_PATH);
+  const program = ShipComputer.loadProgram(await readInputFile(5));
 
   // ===== Part 1 =====
   const program1 = program.slice();
