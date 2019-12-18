@@ -1,11 +1,7 @@
 // https://adventofcode.com/2019/day/3
 import readInputFile from "../utils/readInputFile";
 import chalk from "chalk";
-
-type Point = {
-  x: number;
-  y: number;
-};
+import Point from "../Point";
 
 type WireSegment = [Point, Point];
 
