@@ -16,7 +16,11 @@ enum Direction {
 }
 
 class SpaceMap {
-  private locations = new Map<Number, Map<Number, Color>>();
+  private locations = new Map<number, Map<number, Color>>();
+  private minX = 0;
+  private maxX = 0;
+  private minY = 0;
+  private maxY = 0;
 
   get(point: Point) {
     this.ensureSpaceExists(point);
@@ -31,11 +35,27 @@ class SpaceMap {
 
     const { x, y } = point;
 
+    this.minX = Math.min(x, this.minX);
+    this.maxX = Math.max(x, this.maxX);
+    this.minY = Math.min(y, this.minY);
+    this.maxY = Math.max(y, this.maxY);
+
     this.locations.get(x)!.set(y, color);
   }
 
   getAll() {
     return [...this.locations.entries()].reduce<([Point, Color])[]>((res, [x, yMap]) => res.concat([...yMap.entries()].map(([y, color]) => [{ x, y } as Point, color])), []);
+  }
+
+  toString(): string {
+    const mapHeight = this.maxY - this.minY + 1;
+    const mapWidth = this.maxX - this.minX + 1;
+
+    return [...new Array(mapHeight).keys()]
+      .map((y) => [...new Array(mapWidth).keys()]
+        .map(x => this.get({ x, y }) === Color.Black ? chalk.black('█') : chalk.white('█'))
+        .join(''))
+      .join("\n");
   }
 
   private ensureSpaceExists({ x, y }: Point) {
@@ -51,7 +71,7 @@ class BufferedOutput {
   private buffer: number[] = new Array(2);
   private index = 0;
 
-  constructor(private handler: (bufferedOutput: [Number, Number]) => void) { }
+  constructor(private handler: (bufferedOutput: [number, number]) => void) { }
 
   write = (value: number) => {
     this.buffer[this.index++] = value;
@@ -66,10 +86,11 @@ class BufferedOutput {
 
 class Robot {
   position: Point = { x: 0, y: 0 };
-  map = new SpaceMap();
   private direction = Direction.Up;
 
-  constructor(private program: number[], private onPanelPainted: (position: Point, color: Color) => void) { }
+  constructor(
+    private program: number[],
+    private map: SpaceMap) { }
 
   async run() {
     const buffer = new BufferedOutput(this.handleOutput as any);
@@ -80,7 +101,6 @@ class Robot {
 
   private handleOutput = ([color, direction]: [Color, Direction]) => {
     this.map.set(this.position, color);
-    this.onPanelPainted(this.position, color);
     this.rotate(direction);
     this.moveForward();
   }
@@ -128,11 +148,15 @@ class Robot {
   const program = ShipComputer.loadProgram(inputFile);
 
   // ===== Part 1 =====
-  const paintedMap = new SpaceMap();
-  const robot = new Robot(program.slice(), (position, color) => paintedMap.set(position, color));
-  await robot.run();
-  console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(paintedMap.getAll().length)}`);
+  const map1 = new SpaceMap();
+  const robot1 = new Robot(program.slice(), map1);
+  await robot1.run();
+  console.log(`${chalk.bold("Part 1:")} ${chalk.yellow(map1.getAll().length)}`);
 
   // ===== Part 2 =====
-  console.log(`${chalk.bold("Part 2:")} ${chalk.yellow("TODO")}`);
+  const map2 = new SpaceMap();
+  map2.set({ x: 0, y: 0 }, Color.White);
+  const robot2 = new Robot(program.slice(), map2);
+  await robot2.run();
+  console.log(`${chalk.bold("Part 2:")}\n${chalk.yellow(map2.toString())}`);
 })();
